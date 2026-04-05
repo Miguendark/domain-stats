@@ -9,8 +9,28 @@ const PORT = process.env.PORT || 5000;
 const cron = require('node-cron');
 const db = require('./config/db');
 
-// Tarea diaria... (resto del cron igual)
-...
+// Tarea diaria a medianoche para revisar suscripciones
+cron.schedule('0 0 * * *', async () => {
+    console.log('Revisando suscripciones...');
+    const now = new Date();
+    
+    try {
+        await db.query(`
+            UPDATE subscriptions SET estado = 'expirado' 
+            WHERE fecha_fin < $1 AND estado != 'expirado'
+        `, [now]);
+
+        await db.query(`
+            UPDATE users SET estado = 'suspendido' 
+            WHERE id IN (SELECT user_id FROM subscriptions WHERE estado = 'expirado')
+        `);
+
+        console.log('Suscripciones actualizadas.');
+    } catch (err) {
+        console.error('Error en el cron de suscripciones:', err);
+    }
+});
+
 // Middleware
 app.use(helmet());
 app.use(cors({
@@ -31,7 +51,7 @@ app.get('/', (req, res) => {
     res.send('API de DomainStats funcionando 🚀');
 });
 
-// Levantar servidor
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
+// Levantar servidor (Escuchando en 0.0.0.0 para entornos cloud)
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
