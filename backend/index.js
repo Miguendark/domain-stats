@@ -47,6 +47,15 @@ app.use('/api/stats', require('./routes/stats'));
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/track', require('./routes/track'));
 
+app.get('/api/health', async (req, res) => {
+    try {
+        await db.query('SELECT 1');
+        res.json({ status: 'ok', database: 'connected', timestamp: new Date() });
+    } catch (err) {
+        res.status(500).json({ status: 'error', database: 'disconnected', message: err.message });
+    }
+});
+
 app.get('/', (req, res) => {
     res.send('API de DomainStats funcionando 🚀');
 });
