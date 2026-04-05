@@ -60,7 +60,23 @@ app.get('/', (req, res) => {
     res.send('API de DomainStats funcionando 🚀');
 });
 
-// Levantar servidor (Escuchando en 0.0.0.0 para entornos cloud)
-app.listen(PORT, '0.0.0.0', () => {
+const fs = require('fs');
+const path = require('path');
+
+// Función de migración automática
+const runMigrations = async () => {
+    try {
+        console.log('Iniciando migraciones...');
+        const schema = fs.readFileSync(path.join(__dirname, 'models', 'schema.sql'), 'utf8');
+        await db.query(schema);
+        console.log('Tablas verificadas/creadas con éxito 🎉');
+    } catch (err) {
+        console.error('Error en migraciones:', err);
+    }
+};
+
+// Levantar servidor
+app.listen(PORT, '0.0.0.0', async () => {
+    await runMigrations();
     console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
