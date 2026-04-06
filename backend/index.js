@@ -70,6 +70,13 @@ const runMigrations = async () => {
         const schema = fs.readFileSync(path.join(__dirname, 'models', 'schema.sql'), 'utf8');
         await db.query(schema);
         console.log('Tablas verificadas/creadas con éxito 🎉');
+
+        // Solo insertar semillas en desarrollo o si se desea poblar inicialmente
+        if (process.env.NODE_ENV !== 'production' || process.env.RUN_SEEDS === 'true') {
+            const seeds = fs.readFileSync(path.join(__dirname, 'models', 'seeds.sql'), 'utf8');
+            await db.query(seeds);
+            console.log('Datos de prueba insertados con éxito 🧪');
+        }
     } catch (err) {
         console.error('Error en migraciones:', err);
     }
